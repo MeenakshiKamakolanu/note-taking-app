@@ -1,4 +1,3 @@
-// routes/notes.js
 const express = require('express');
 const router = express.Router();
 const Note = require('../models/note');
@@ -20,12 +19,20 @@ router.post('/create', async (req, res) => {
 
 // Edit Note
 router.put('/edit/:id', async (req, res) => {
+  const { title, content } = req.body;
+  if (!title || !content) {
+    return res.status(400).json({ message: "Title and content are required." });
+  }
+
   try {
     const updatedNote = await Note.findByIdAndUpdate(
       req.params.id,
-      { title: req.body.title, content: req.body.content },
+      { title, content },
       { new: true }
     );
+    if (!updatedNote) {
+      return res.status(404).json({ message: "Note not found." });
+    }
     res.json(updatedNote);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -35,7 +42,10 @@ router.put('/edit/:id', async (req, res) => {
 // Delete Note
 router.delete('/delete/:id', async (req, res) => {
   try {
-    await Note.findByIdAndDelete(req.params.id);
+    const deletedNote = await Note.findByIdAndDelete(req.params.id);
+    if (!deletedNote) {
+      return res.status(404).json({ message: "Note not found." });
+    }
     res.json({ message: 'Note deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -46,6 +56,9 @@ router.delete('/delete/:id', async (req, res) => {
 router.get('/display/:id', async (req, res) => {
   try {
     const note = await Note.findById(req.params.id);
+    if (!note) {
+      return res.status(404).json({ message: "Note not found." });
+    }
     res.json(note);
   } catch (err) {
     res.status(500).json({ message: err.message });
